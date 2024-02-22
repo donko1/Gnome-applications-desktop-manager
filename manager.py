@@ -11,11 +11,11 @@ class CannotReadApplicationsFolder(Exception):
 
 class ApplicationManager:
 	def __init__(self):
-		self.folder_path = os.path.expanduser('~/.local/share/applications')
-		self.folder_path_global = os.path.expanduser('/usr/share/applications')
+		self.folder_path: str = os.path.expanduser('~/.local/share/applications')
+		self.folder_path_global: str = os.path.expanduser('/usr/share/applications')
 		if not self.folder_path or not self.folder_path_global:
 			raise CannotReadApplicationsFolder
-		self.form = """[Desktop Entry]
+		self.form: str = """[Desktop Entry]
 Version=1.0
 Terminal={3}
 Type=Application
@@ -26,21 +26,21 @@ Icon={2}
 
 	@staticmethod
 	def __format_desktop_to_dict(desktop_content: str) -> dict:
-		out = {}
-		split_text = tuple(desktop_content.split("\n"))
+		out: dict = {}
+		split_text: tuple = tuple(desktop_content.split("\n"))
 		for text in split_text:
-			if text[0:4] in ["Name", "Exec", "Icon"]:
+			if text[0:4] in ["Name", "Exec", "Icon"]: # if we see Name, Exec or Icon setting
 				out[text[0:4]] = text[5:]
 		return out
 
 	@classmethod
 	def __get_all_applications_from_folder(cls, folder: str) -> list:
-		out = []
-		files = os.listdir(folder)
+		out: list = []
+		files: list = os.listdir(folder)
 		for file in files:
-			path_to_file = f"{folder}/{file}"
+			path_to_file: str = f"{folder}/{file}" 
 			with open(path_to_file, "r") as f:
-				text = f.read()
+				text: str = f.read()
 				out.append(cls.__format_desktop_to_dict(text))
 		return out
 
@@ -63,22 +63,22 @@ Icon={2}
 			raise CannotMoveNotExistingFileError("File is not exists!")
 			return
 
-		code = self.form.format(name_of_app, command, icon_path, str(terminal).lower())
+		code: str = self.form.format(name_of_app, command, icon_path, str(terminal).lower()) # Making code of desktop file
 		if do_write_in_file:
 			with open(f"{name_of_app}.desktop", "w") as f:
 				f.write(code)
 			if move_file_to_application:
 				if localFolder:
-					os.rename(f"{name_of_app}.desktop", f"{self.folder_path}/{name_of_app}.desktop")
+					os.rename(f"{name_of_app}.desktop", f"{self.folder_path}/{name_of_app}.desktop") # Replace to local folder
 					return
-				os.rename(f"{name_of_app}.desktop", f"{self.folder_path_global}/{name_of_app}.desktop")
+				os.rename(f"{name_of_app}.desktop", f"{self.folder_path_global}/{name_of_app}.desktop") # Replace to global folder
 			return None
 		
 		return code
 
 def main():
 	manager = ApplicationManager()
-	print(manager.get_all_applications()[1])
+	manager.get_all_applications()[1]
 	# manager.create_desktop_file("test", "test", "test", True)
 
 if __name__ == '__main__':
