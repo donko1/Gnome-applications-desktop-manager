@@ -1,4 +1,3 @@
-
 import os
 # from pprint import pprint as print # This line is for debug
 
@@ -13,7 +12,8 @@ class CannotReadApplicationsFolder(Exception):
 class ApplicationManager:
 	def __init__(self):
 		self.folder_path = os.path.expanduser('~/.local/share/applications')
-		if not self.folder_path:
+		self.folder_path_global = os.path.expanduser('/usr/share/applications')
+		if not self.folder_path or not self.folder_path_global:
 			raise CannotReadApplicationsFolder
 		self.form = """[Desktop Entry]
 Version=1.0
@@ -25,7 +25,7 @@ Icon={2}
 """
 
 	@staticmethod
-	def format_desktop_to_dict(desktop_content: str) -> dict:
+	def __format_desktop_to_dict(desktop_content: str) -> dict:
 		out = {}
 		split_text = tuple(desktop_content.split("\n"))
 		for text in split_text:
@@ -33,15 +33,21 @@ Icon={2}
 				out[text[0:4]] = text[5:]
 		return out
 
-	def get_all_applications(self) -> list:
+	@classmethod
+	def __get_all_applications_from_folder(cls, folder: str) -> list:
 		out = []
-		files = os.listdir(self.folder_path)
+		files = os.listdir(folder)
 		for file in files:
-			path_to_file = f"{self.folder_path}/{file}"
+			path_to_file = f"{folder}/{file}"
 			with open(path_to_file, "r") as f:
 				text = f.read()
-				out.append(self.format_desktop_to_dict(text))
+				out.append(cls.__format_desktop_to_dict(text))
 		return out
+
+	def get_all_applications(self):
+		local_applications: tuple = tuple(self.__get_all_applications_from_folder(self.folder_path))
+		glob_applications: tuple = tuple(self.__get_all_applications_from_folder(self.folder_path_global))
+		return (local_applications, glob_applications)
 
 	def create_desktop_file(
 		self,
@@ -49,8 +55,9 @@ Icon={2}
 		icon_path: str,
 		command: str,
 		terminal: bool,
-		do_write_in_file: bool = True,
-		move_file_to_application: bool = True
+		do_write_in_file: bool=True,
+		move_file_to_application: bool=True,
+		localFolder: bool=True
 	) -> None | str:
 		if not do_write_in_file and move_file_to_application:
 			raise CannotMoveNotExistingFileError("File is not exists!")
@@ -61,14 +68,17 @@ Icon={2}
 			with open(f"{name_of_app}.desktop", "w") as f:
 				f.write(code)
 			if move_file_to_application:
-				
-				os.rename(f"{name_of_app}.desktop", f"{self.folder_path}/{name_of_app}.desktop")
-		else:
-			return code
+				if localFolder:
+					os.rename(f"{name_of_app}.desktop", f"{self.folder_path}/{name_of_app}.desktop")
+					return
+				os.rename(f"{name_of_app}.desktop", f"{self.folder_path_global}/{name_of_app}.desktop")
+			return None
+		
+		return code
 
 def main():
 	manager = ApplicationManager()
-	manager.get_all_applications()
+	print(manager.get_all_applications()[1])
 	# manager.create_desktop_file("test", "test", "test", True)
 
 if __name__ == '__main__':
