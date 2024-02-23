@@ -2,6 +2,7 @@
 import customtkinter as ctk
 import json
 import os
+from PIL import ImageTk
 
 def restart_application():
     app.destroy()  
@@ -28,6 +29,13 @@ class Settings:
 
     def get_data(self, key):
         return self.data.get(key)
+
+class MakeApplication(ctk.CTkFrame):
+    def __init__(self, master):
+        super().__init__(master)
+        self.settings = Settings()
+        self.label = ctk.CTkLabel(self, text="Here u will make ur applications")
+        self.label.pack()
 
 class AllLocalApplications(ctk.CTkFrame):
     def __init__(self, master):
@@ -92,20 +100,26 @@ class App(ctk.CTk):
 
         menubar = ctk.CTkFrame(self)
         menubar.pack(side="top", fill="x")
-        menubar.columnconfigure([0, 1, 2, 3] if self.settings.get_data("ExtendedSettings") else [0, 1, 2], weight=1)
+        menubar.columnconfigure([0, 1, 2, 3, 4] if self.settings.get_data("ExtendedSettings") else [0, 1, 2, 3], weight=1)
 
         button_guide = ctk.CTkButton(menubar, text=chooseTextByLanguage("Гайд", "Guide", self.settings.get_data("Language")), command=self.open_guide)
         button_guide.grid(row=0, column=0, padx=10, pady=5)
 
-        button_local = ctk.CTkButton(menubar, text=chooseTextByLanguage("Локальные приложения" if self.settings.get_data("ExtendedSettings") else "Приложения", "Local applications" if self.settings.get_data("ExtendedSettings") else "Applications", self.settings.get_data("Language")), command=self.open_local)
+        button_local = ctk.CTkButton(menubar, text=chooseTextByLanguage("Локальные\nприложения" if self.settings.get_data("ExtendedSettings") else "Приложения", "Local\napplications" if self.settings.get_data("ExtendedSettings") else "Applications", self.settings.get_data("Language")), command=self.open_local)
         button_local.grid(row=0, column=1, padx=10, pady=5)
 
-        button_global = ctk.CTkButton(menubar, text=chooseTextByLanguage("Глобальные приложения", "Global applications", self.settings.get_data("Language")), command=self.open_global)
+        button_global = ctk.CTkButton(menubar, text=chooseTextByLanguage("Глобальные\nприложения", "Global\napplications", self.settings.get_data("Language")), command=self.open_global)
         if self.settings.get_data("ExtendedSettings"):
             button_global.grid(row=0, column=2, padx=10, pady=5)
 
+
+        button_maker = ctk.CTkButton(menubar, text=chooseTextByLanguage("Создать\nсвоё приложение", "Make your\nown application", self.settings.get_data("Language")), command=self.open_maker)
+        button_maker.grid(row=0, column=3 if self.settings.get_data("ExtendedSettings") else 2, padx=10, pady=5)
+
+
         button_settings = ctk.CTkButton(menubar, text=chooseTextByLanguage("Настройки", "Settings", self.settings.get_data("Language")), command=self.open_settings)
-        button_settings.grid(row=0, column=3 if self.settings.get_data("ExtendedSettings") else 2, padx=10, pady=5)
+        button_settings.grid(row=0, column=4 if self.settings.get_data("ExtendedSettings") else 3, padx=10, pady=5)
+
 
         self.frame = ctk.CTkFrame(self)
         self.frame.pack(fill="both", expand=True)
@@ -131,6 +145,10 @@ class App(ctk.CTk):
         self.frame = SettingsFrame(self)
         self.frame.pack(fill="both", expand=True)
 
+    def open_maker(self):
+        self.frame.pack_forget()
+        self.frame = MakeApplication(self)
+        self.frame.pack(fill="both", expand=True)
 
     def update_settings(self):
         pass
@@ -138,8 +156,8 @@ class App(ctk.CTk):
 def main():
     global app
     app = App()
+    app.iconphoto(False, ImageTk.PhotoImage(file='assets/icon.png'))
     app.mainloop()
-
 
 if __name__ == '__main__':
     main()

@@ -26,6 +26,11 @@ Exec={1}
 Icon={2}
 """
 
+		path_to_app = os.path.abspath("app.py")
+		names = (el["Name"] for el in self.get_all_applications()[0])
+		if not "Gnome applications manager" in names:
+			self.create_desktop_file("Gnome applications manager", )
+
 
 	def __format_dict_to_desktop(self, d: dict) -> str:
 		return self.form.format(d["Name"], d["Exec"], d["Icon"], str(d["Terminal"]).lower())
