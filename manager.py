@@ -1,4 +1,5 @@
 import os
+import locale
 # from pprint import pprint as print # This line is for debug
 
 class CannotMoveNotExistingFileError(Exception):
@@ -27,10 +28,9 @@ Icon={2}
 """
 
 		path_to_app = os.path.abspath("app.py")
-		names = (el["Name"] for el in self.get_all_applications()[0])
-		if not "Gnome applications manager" in names:
-			self.create_desktop_file("Gnome applications manager", os.path.abspath("assets/icon.png"), f"bash {os.path.abspath('start.sh')}")
-
+		names = [el["Name"] for el in self.get_all_applications()[0]]
+		if not "Gnome applications manager" in names and not "Менеджер приложений gnome" in names:
+			self.create_desktop_file("Gnome applications manager" if not locale.getlocale()[0] == "ru_RU" else "Менеджер приложений gnome",  os.path.abspath("assets/icon.png"), f"bash {os.path.abspath('start.sh')}")
 
 
 	def __format_dict_to_desktop(self, d: dict) -> str:

@@ -3,6 +3,7 @@ import customtkinter as ctk
 import json
 import os
 from PIL import ImageTk
+from manager import ApplicationManager
 
 def restart_application():
     app.destroy()  
@@ -156,6 +157,7 @@ class App(ctk.CTk):
 def main():
     global app
     app = App()
+    manager = ApplicationManager()
     app.iconphoto(False, ImageTk.PhotoImage(file='assets/icon.png'))
     app.mainloop()
 
