@@ -1,5 +1,5 @@
 import os
-from pprint import pprint as print # This line is for debug
+# from pprint import pprint as print # This line is for debug
 
 class CannotMoveNotExistingFileError(Exception):
 	def __init__(self, *args, **kwargs):
@@ -29,7 +29,8 @@ Icon={2}
 		path_to_app = os.path.abspath("app.py")
 		names = (el["Name"] for el in self.get_all_applications()[0])
 		if not "Gnome applications manager" in names:
-			self.create_desktop_file("Gnome applications manager", )
+			self.create_desktop_file("Gnome applications manager", os.path.abspath("assets/icon.png"), f"bash {os.path.abspath('start.sh')}")
+
 
 
 	def __format_dict_to_desktop(self, d: dict) -> str:
