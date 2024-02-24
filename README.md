@@ -10,7 +10,7 @@
 sudo apt-get install xclip
 sudo apt-get install python3-tk
 sudo apt install git
-sudo apt install python-3.$-venv # For example pytohn-3.10-venv
+sudo apt install python3.$-venv # For example pytohn-3.10-venv
 ```
 Replace $ with your version of python. 
 ```bash
