@@ -237,7 +237,6 @@ class EditApp(ctk.CTkFrame):
         self.submit_button = ctk.CTkButton(self.frame_frame, text=chooseTextByLanguage("Сохранить", "Save", self.settings.get_data("Language")), command=self.submit)
         self.submit_button.grid(row=2, column=0, pady=0, sticky="nsew")
 
-
         self.delete_button = ctk.CTkButton(self.frame_frame, text=chooseTextByLanguage("Удалить приложеине", "Delete application", self.settings.get_data("Language")), command=self.delete, fg_color="#ec5f66")
         self.delete_button.grid(row=3, column=0, pady=0, sticky="nsew")
 
@@ -263,7 +262,9 @@ class EditApp(ctk.CTkFrame):
         if hasattr(self, "message"):
             self.message.grid_forget()
         self.submit_button.grid_forget()
+        self.delete_button.grid_forget()
         try:
+
             manager.edit_application(
                 application_path=self.application_data["file"],
                 new_data={
