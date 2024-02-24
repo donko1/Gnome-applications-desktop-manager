@@ -2,14 +2,15 @@
 import customtkinter as ctk
 import json
 import os
-from PIL import ImageTk
+from PIL import ImageTk, Image
 from manager import ApplicationManager
+import pyperclip
 
 def restart_application():
     app.destroy()  
     main()  
 
-def chooseTextByLanguage(ruText: str, enText: str, lang: str):
+def chooseTextByLanguage(ruText: str, enText: str, lang: str) -> str:
     if lang == "Русский":
         return ruText
     return enText
@@ -35,8 +36,96 @@ class MakeApplication(ctk.CTkFrame):
     def __init__(self, master):
         super().__init__(master)
         self.settings = Settings()
-        self.label = ctk.CTkLabel(self, text="Here u will make ur applications")
-        self.label.pack()
+        self.path_to_icon = None
+
+        self.frame_frame = ctk.CTkFrame(self)
+        self.form_frame = ctk.CTkFrame(self.frame_frame)
+        self.parent_frame = ctk.CTkFrame(self.form_frame)
+
+        self.name_frame = ctk.CTkFrame(self.parent_frame, width=400, corner_radius=0)
+        self.name_frame_label = ctk.CTkLabel(self.name_frame, text=chooseTextByLanguage("Название:", "Name:", self.settings.get_data("Language")))
+        self.name_frame_label.grid(row=0, column=0, padx=(10, 0), pady=20)
+        self.name_frame_input = ctk.CTkEntry(self.name_frame, height=30, placeholder_text=chooseTextByLanguage("Моё приложение", "My app", self.settings.get_data("Language")))
+        self.name_frame_input.grid(row=0, column=1, padx=(5, 10), pady=20)
+        self.name_frame.grid(row=1, column=0, padx=(20, 10), pady=(10, 0), sticky="nsew")
+        
+        self.icon_path = ctk.CTkFrame(self.parent_frame, width=400, corner_radius=0)
+        self.icon_path_label = ctk.CTkLabel(self.icon_path, text=chooseTextByLanguage("Иконка:", "Icon:", self.settings.get_data("Language")))
+        self.icon_path_label.grid(row=0, column=0, padx=(10, 0), pady=20)
+        self.icon_path_button = ctk.CTkButton(self.icon_path, text=chooseTextByLanguage("Открыть", "Open", self.settings.get_data("Language")), command=self.selectfile) 
+        self.icon_path_button.grid(row=0, column=1, padx=(5, 10), pady=20)
+        self.icon_path.grid(row=2, column=0, padx=(20, 10), sticky="nsew")
+
+        self.terminalComand_frame = ctk.CTkFrame(self.parent_frame, width=400, corner_radius=0)
+        self.terminalComand_frame_label = ctk.CTkLabel(self.terminalComand_frame, text=chooseTextByLanguage("Команда:", "Command:", self.settings.get_data("Language")))
+        self.terminalComand_frame_label.grid(row=0, column=0, padx=(10, 0), pady=20)
+        self.terminalComand_frame_input = ctk.CTkEntry(self.terminalComand_frame, height=30, width=200, placeholder_text="neofetch")
+        self.terminalComand_frame_input.grid(row=0, column=1, padx=(5, 10), pady=20)
+        self.terminalComand_frame.grid(row=3, column=0, padx=(20, 10), sticky="nsew")
+
+        self.terminal_frame = ctk.CTkFrame(self.parent_frame, width=400, corner_radius=0)
+        self.terminal_frame_checkbox = ctk.CTkCheckBox(self.terminal_frame, text=chooseTextByLanguage("Открывать терминал", "Open terminal", self.settings.get_data("Language")))
+        self.terminal_frame_checkbox.grid(row=0, column=0, padx=20, pady=20, sticky="nsew")
+        
+
+        self.move_frame = ctk.CTkFrame(self.parent_frame, width=400, corner_radius=0)
+        self.move_frame_checkbox = ctk.CTkCheckBox(self.move_frame, text=chooseTextByLanguage("Перемещать файл", "Move file", self.settings.get_data("Language")))
+        self.move_frame_checkbox.grid(row=0, column=0, padx=20, pady=20, sticky="nsew")
+        self.move_frame_checkbox.select()
+
+        if self.settings.get_data("ExtendedSettings"):
+            self.label = ctk.CTkLabel(self.frame_frame, text=chooseTextByLanguage("Создать приложение/.desktop файл", "Create application/.desktop file", self.settings.get_data("Language")))
+            self.terminal_frame.grid(row=4, column=0, padx=(20, 10), sticky="nsew")
+            self.move_frame.grid(row=5, column=0, padx=(20, 10), sticky="nsew")
+
+        else:
+            self.label = ctk.CTkLabel(self.frame_frame, text=chooseTextByLanguage("Создать приложение", "Create application", self.settings.get_data("Language")))            
+
+        self.label.grid(row=0, column=0)
+
+        self.parent_frame.grid(row=0, column=0)
+        self.form_frame.grid(row=1, column=0, pady=10, sticky="nsew")
+
+        self.submit_button = ctk.CTkButton(self.frame_frame, text=chooseTextByLanguage("Создать приложеине", "Create application", self.settings.get_data("Language")), command=self.submit)
+        self.submit_button.grid(row=2, column=0, pady=0, sticky="nsew")
+
+        self.frame_frame.pack()
+
+    def selectfile(self):
+        filename = ctk.filedialog.askopenfilename()
+        self.path_to_icon = filename
+        if filename:
+            self.icon_path_button.grid_forget()
+            self.icon_path_button = ctk.CTkLabel(self.icon_path, text=chooseTextByLanguage("Иконка выбрана.\nНажмите на иконку что бы изменить её", "Icon selected.\nClick on icon to change it.", self.settings.get_data("Language")))
+            self.icon_path_button.grid(row=0, column=1, padx=(10, 10), pady=20)
+            my_image = ctk.CTkImage(light_image=Image.open(filename),
+                                  dark_image=Image.open(filename),
+                                  size=(200, 200))
+
+            self.image_of_app = button = ctk.CTkButton(self.form_frame, image=my_image, text="", command=self.selectfile)
+            self.image_of_app.grid(row=0, column=1, pady=(20, 10))
+
+    def submit(self):
+        if hasattr(self, "message"):
+            self.message.grid_forget()
+        if not("" in [self.terminalComand_frame_input.get(), self.path_to_icon, self.name_frame_input.get()] or None in [self.terminalComand_frame_input.get(), self.path_to_icon, self.name_frame_input.get()]):
+            
+            self.message = ctk.CTkLabel(self.frame_frame, text=chooseTextByLanguage("Успешно создано приложение!", "Application successfully created!", self.settings.get_data("Language")) if self.move_frame_checkbox.get() else chooseTextByLanguage(f"Успешно создано приложение!\nПуть до директории с .desktop файлом в буфере обмена", f"Application successfully created!\nPath to folder with .desktop file in your clipboard", self.settings.get_data("Language")))
+            pyperclip.copy(os.getcwd())
+            pyperclip.paste()
+            self.submit_button.grid_forget()
+            self.message.grid(row=3, column=0, pady=0, sticky="nsew")
+            manager.create_desktop_file(
+                name_of_app=self.name_frame_input.get(),
+                icon_path=self.path_to_icon,
+                command=self.terminalComand_frame_input.get(),
+                terminal=self.terminal_frame_checkbox.get(),
+                move_file_to_application=self.move_frame_checkbox.get())
+            return
+
+        self.message = ctk.CTkLabel(self.frame_frame, text=chooseTextByLanguage("Заполните все поля!", "Fill in all the fields!", self.settings.get_data("Language")))
+        self.message.grid(row=3, column=0, pady=0, sticky="nsew")
+
 
 class AllLocalApplications(ctk.CTkFrame):
     def __init__(self, master):
@@ -155,7 +244,7 @@ class App(ctk.CTk):
         pass
 
 def main():
-    global app
+    global app, manager
     app = App()
     manager = ApplicationManager()
     app.iconphoto(False, ImageTk.PhotoImage(file='assets/icon.png'))
