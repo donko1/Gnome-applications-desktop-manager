@@ -67,16 +67,24 @@ class MakeApplication(ctk.CTkFrame):
         self.terminal_frame_checkbox = ctk.CTkCheckBox(self.terminal_frame, text=chooseTextByLanguage("Открывать терминал", "Open terminal", self.settings.get_data("Language")))
         self.terminal_frame_checkbox.grid(row=0, column=0, padx=20, pady=20, sticky="nsew")
         
-
         self.move_frame = ctk.CTkFrame(self.parent_frame, width=400, corner_radius=0)
-        self.move_frame_checkbox = ctk.CTkCheckBox(self.move_frame, text=chooseTextByLanguage("Перемещать файл", "Move file", self.settings.get_data("Language")))
+        self.move_frame_checkbox = ctk.CTkCheckBox(self.move_frame, text=chooseTextByLanguage("Перемещать файл", "Move file", self.settings.get_data("Language")), command=self.move_checkbox)
         self.move_frame_checkbox.grid(row=0, column=0, padx=20, pady=20, sticky="nsew")
         self.move_frame_checkbox.select()
+
+        self.folder_frame = ctk.CTkFrame(self.parent_frame)
+        self.label = ctk.CTkLabel(self.folder_frame, text=chooseTextByLanguage("Папка назначения:", "Destination folder:", self.settings.get_data("Language")))
+        self.label.pack(side="left", padx=(10, 0), pady=10)
+        self.option_menu = ctk.CTkOptionMenu(self.folder_frame, values=[chooseTextByLanguage("Локальная", "Local", self.settings.get_data("Language")), chooseTextByLanguage("Глобальная", "Global", self.settings.get_data("Language"))])
+        self.option_menu.pack(side="left", padx=(5, 10), pady=10)
+        self.option_menu.set(chooseTextByLanguage("Локальная", "Local", self.settings.get_data("Language")))
+
 
         if self.settings.get_data("ExtendedSettings"):
             self.label = ctk.CTkLabel(self.frame_frame, text=chooseTextByLanguage("Создать приложение/.desktop файл", "Create application/.desktop file", self.settings.get_data("Language")))
             self.terminal_frame.grid(row=4, column=0, padx=(20, 10), sticky="nsew")
             self.move_frame.grid(row=5, column=0, padx=(20, 10), sticky="nsew")
+            self.folder_frame.grid(row=6, column=0, padx=(20, 10), sticky="nsew")
 
         else:
             self.label = ctk.CTkLabel(self.frame_frame, text=chooseTextByLanguage("Создать приложение", "Create application", self.settings.get_data("Language")))            
@@ -105,26 +113,40 @@ class MakeApplication(ctk.CTkFrame):
             self.image_of_app = button = ctk.CTkButton(self.form_frame, image=my_image, text="", command=self.selectfile)
             self.image_of_app.grid(row=0, column=1, pady=(20, 10))
 
+    def move_checkbox(self):
+        if self.move_frame_checkbox.get():
+            self.option_menu.set(chooseTextByLanguage("Локальная", "Local", self.settings.get_data("Language")))
+            self.folder_frame.grid(row=6, column=0, padx=(20, 10), sticky="nsew")
+            return
+
+        self.folder_frame.grid_forget()
+
     def submit(self):
         if hasattr(self, "message"):
             self.message.grid_forget()
         if not("" in [self.terminalComand_frame_input.get(), self.path_to_icon, self.name_frame_input.get()] or None in [self.terminalComand_frame_input.get(), self.path_to_icon, self.name_frame_input.get()]):
-            
-            self.message = ctk.CTkLabel(self.frame_frame, text=chooseTextByLanguage("Успешно создано приложение!", "Application successfully created!", self.settings.get_data("Language")) if self.move_frame_checkbox.get() else chooseTextByLanguage(f"Успешно создано приложение!\nПуть до директории с .desktop файлом в буфере обмена", f"Application successfully created!\nPath to folder with .desktop file in your clipboard", self.settings.get_data("Language")))
-            pyperclip.copy(os.getcwd())
-            pyperclip.paste()
             self.submit_button.grid_forget()
-            self.message.grid(row=3, column=0, pady=0, sticky="nsew")
-            manager.create_desktop_file(
-                name_of_app=self.name_frame_input.get(),
-                icon_path=self.path_to_icon,
-                command=self.terminalComand_frame_input.get(),
-                terminal=self.terminal_frame_checkbox.get(),
-                move_file_to_application=self.move_frame_checkbox.get())
+            if self.move_frame_checkbox.get():
+                pyperclip.copy(os.getcwd())
+                pyperclip.paste()
+            try:
+                manager.create_desktop_file(
+                    name_of_app=self.name_frame_input.get(),
+                    icon_path=self.path_to_icon,
+                    command=self.terminalComand_frame_input.get(),
+                    terminal=self.terminal_frame_checkbox.get(),
+                    move_file_to_application=self.move_frame_checkbox.get(),
+                    localFolder=self.option_menu.get() == "Локальная" or self.option_menu.get() == "Local"
+                    )
+            except PermissionError:
+                self.message = ctk.CTkLabel(self.frame_frame, text=chooseTextByLanguage(f"Ошибка доступа! Для пермещения файла в глоабльную папку откройте это приложение от лица администратора", f"PermissionError! To move file to global folder open this app as admin", self.settings.get_data("Language")))
+            else:
+                self.message = ctk.CTkLabel(self.frame_frame, text=chooseTextByLanguage("Успешно создано приложение!", "Application successfully created!", self.settings.get_data("Language")) if self.move_frame_checkbox.get() else chooseTextByLanguage(f"Успешно создано приложение!\nПуть до директории с .desktop файлом в буфере обмена", f"Application successfully created!\nPath to folder with .desktop file in your clipboard", self.settings.get_data("Language")))
+            self.message.grid(row=3, column=0, pady=10, sticky="nsew")
             return
 
         self.message = ctk.CTkLabel(self.frame_frame, text=chooseTextByLanguage("Заполните все поля!", "Fill in all the fields!", self.settings.get_data("Language")))
-        self.message.grid(row=3, column=0, pady=0, sticky="nsew")
+        self.message.grid(row=3, column=0, pady=10, sticky="nsew")
 
 
 class AllLocalApplications(ctk.CTkFrame):
@@ -186,7 +208,7 @@ class App(ctk.CTk):
         self.settings = Settings()
 
         self.title("Gnome applications manager")
-        self.geometry("800x400") 
+        self.geometry("800x800") 
 
         menubar = ctk.CTkFrame(self)
         menubar.pack(side="top", fill="x")
