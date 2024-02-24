@@ -2,6 +2,8 @@
 #!/bin/bash
 
 script_dir=$(dirname "$0")
+sudo apt-get install xclip
+sudo apt-get install python3-tk
 cd $script_dir
 
 folderVenv="venv"
