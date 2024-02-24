@@ -2,6 +2,8 @@
 ## - edit applications
 ## - deleting applications
 ## - making new applications
+## Example:
+![example image](https://github.com/donko1/Gnome-applications-desktop-manager/raw/main/assets/example.png)
 ## Installing:
 - Download repo with this command:
 ```bash
