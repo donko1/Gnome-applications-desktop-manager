@@ -1,5 +1,7 @@
+
 import os
 import locale
+from collections import namedtuple
 # from pprint import pprint as print # This line is for debug
 
 class CannotMoveNotExistingFileError(Exception):
@@ -28,8 +30,12 @@ Icon={2}
 """
 
 		path_to_app = os.path.abspath("app.py")
-		names = [el["Name"] for el in self.get_all_applications()[0]]
-		if not "Gnome applications manager" in names and not "Менеджер приложений gnome" in names:
+		names = [el["Name"] for el in self.get_all_applications().local_apps]
+		Exec = False
+		for el in self.get_all_applications().local_apps:
+			if el["Exec"] == f"bash {os.path.abspath('start.sh')}":
+				Exec = True
+		if not "Gnome applications manager" in names and not "Менеджер приложений gnome" in names and not Exec:
 			self.create_desktop_file("Gnome applications manager" if not locale.getlocale()[0] == "ru_RU" else "Менеджер приложений gnome",  os.path.abspath("assets/icon.png"), f"bash {os.path.abspath('start.sh')}")
 
 
@@ -71,8 +77,9 @@ Icon={2}
 	def get_all_applications(self):
 		local_applications: tuple = tuple(self.__get_all_applications_from_folder(self.folder_path))
 		glob_applications: tuple = tuple(self.__get_all_applications_from_folder(self.folder_path_global))
-
-		return (local_applications, glob_applications)
+		outC = namedtuple("Apps", "local_apps global_apps")
+		out = outC(local_applications, glob_applications) 
+		return out
 
 
 	def create_desktop_file(
@@ -113,6 +120,11 @@ Icon={2}
 			code = self.__format_dict_to_desktop(new_data) 
 			with open(application_path, "w") as f:
 				f.write(code)
+			name = new_data["Name"]
+			path = application_path.split("/")[0:-1]
+			path.append(f"{name}.desktop")
+			new_path = "/".join(path)
+			os.rename(application_path, new_path)
 			return
 
 		raise FileExistsError("Editing file is not exists")
