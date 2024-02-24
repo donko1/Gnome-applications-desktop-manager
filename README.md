@@ -13,8 +13,8 @@ sudo apt install git
 sudo apt install python-3.$-venv # For example pytohn-3.10-venv
 ```
 Replace $ with your version of python. 
-```
-python3 -V
+```bash
+python3 -V # Will return your version of python
 ```
 ## Installing:
 
