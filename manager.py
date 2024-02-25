@@ -1,8 +1,11 @@
 
+# -*- coding: utf-8 -*-
+ 
 import os
 import locale
 from collections import namedtuple
-# from pprint import pprint as print # This line is for debug
+from settings import Settings
+from pprint import pprint as print # This line is for debug
 
 class CannotMoveNotExistingFileError(Exception):
 	def __init__(self, *args, **kwargs):
@@ -16,11 +19,15 @@ class ApplicationManager:
 	def __init__(self):
 		self.folder_path: str = os.path.expanduser('~/.local/share/applications')
 		self.folder_path_global: str = '/usr/share/applications'
+		self.settings = Settings()
+		
 		if not os.path.exists(self.folder_path):
 			self.folder_path = None
 		if not self.folder_path or not self.folder_path_global:
 			raise CannotReadApplicationsFolder
-		
+
+
+
 		self.form: str = """[Desktop Entry]
 Version=1.0
 Terminal={3}
@@ -38,29 +45,40 @@ Icon={2}
 				Exec = True
 		if not "Gnome applications manager" in names and not "Менеджер приложений gnome" in names and not Exec:
 			self.create_desktop_file("Gnome applications manager" if not locale.getlocale()[0] == "ru_RU" else "Менеджер приложений gnome",  os.path.abspath("assets/icon.png"), f"bash {os.path.abspath('start.sh')}")
-
+			with open(os.path.expanduser("~/.bashrc"), "r") as f:
+				if not f"alias gnome_applications_manager=\"sudo bash {os.path.abspath('start.sh')}\"" in f.read():
+					with open(os.path.expanduser("~/.bashrc"), "a") as f2:
+						f2.write(f"\nalias gnome_applications_manager=\"sudo bash {os.path.abspath('start.sh')}\"")
 
 	def __format_dict_to_desktop(self, d: dict) -> str:
 		return self.form.format(d["Name"], d["Exec"], d["Icon"], str(d["Terminal"]).lower())
 
 
 	@staticmethod
-	def __format_desktop_to_dict(desktop_content: str) -> dict:
+	def __format_desktop_to_dict(desktop_content: str, language: str) -> dict:
 		out: dict = {}
 		split_text: tuple = tuple(desktop_content.split("\n"))
 
 		for text in split_text:
-			if text[0:4] in ["Name", "Exec", "Icon", "Term"]: # if we see Name, Exec or Icon setting
-				if text[0:4] != "Term":
-					out[text[0:4]] = text[5:]
-					continue
-				out[text[0:8]] = True if text[9:] == "true" else False
+			try:
+				if text[0:4] in ["Name", "Exec", "Icon", "Term"]: # if we see Name, Exec or Icon setting
+					if text[0:4] != "Term":
+						if text[0:5] == "Name[":
+							if text[0:7] == "Name[ru" and language == "Русский":
+								out[text[0:4]] = text[9:] 
+							continue
+						out[text[0:4]] = text[5:]
+						continue
+					out[text[0:8]] = True if text[9:] == "true" else False
+			except:
+				continue
 
-		return out
+		if "Name" in out.keys() and "Exec" in out.keys() and "Terminal" in out.keys():
+			return out
 
 
 	@classmethod
-	def __get_all_applications_from_folder(cls, folder: str) -> list:
+	def __get_all_applications_from_folder(cls, folder: str, language: str) -> list:
 		out: list = []
 		if not folder:
 			return []
@@ -70,18 +88,24 @@ Icon={2}
 			if path_to_file.endswith(".desktop"):
 				with open(path_to_file, "r") as f:
 					text: str = f.read()
-					info: dict = cls.__format_desktop_to_dict(text)
-					info["file"] = path_to_file
-					out.append(info)
+					info: dict = cls.__format_desktop_to_dict(text, language)
+					if info:
+						info["file"] = path_to_file
+						out.append(info)
 
 		return out
 
 
 	def get_all_applications(self):
-		local_applications: tuple = tuple(self.__get_all_applications_from_folder(self.folder_path))
-		glob_applications: tuple = tuple(self.__get_all_applications_from_folder(self.folder_path_global))
+		local_applications: tuple = tuple(self.__get_all_applications_from_folder(self.folder_path, self.settings.get_data("Language")))
+		glob_applications: list = [self.__get_all_applications_from_folder(self.folder_path_global, self.settings.get_data("Language"))]
+		if os.path.exists("/var/lib/snapd/desktop/"):
+			snapd: tuple = (self.__get_all_applications_from_folder("/var/lib/snapd/desktop/", self.settings.get_data("Language")))
+			if snapd:
+				glob_applications.extend(snapd)
+
 		outC = namedtuple("Apps", "local_apps global_apps")
-		out = outC(local_applications, glob_applications) 
+		out = outC(local_applications, *glob_applications) 
 		return out
 
 
@@ -103,7 +127,7 @@ Icon={2}
 			"Name": name_of_app, 
 			"Icon":icon_path, 
 			"Terminal": terminal, 
-			"Exec": command}
+			"Exec": command},
 		)
 
 		if do_write_in_file:
@@ -139,7 +163,6 @@ Icon={2}
 
 		newPath1 = f"{self.folder_path}/{application_path}"
 		newPath2 = f"{self.folder_path_global}/{application_path}"
-		print(newPath1)
 		if os.path.isfile(newPath2) or os.path.isfile(newPath1):
 			os.remove(newPath1 if os.path.isfile(newPath1) else newPath2)
 		raise FileExistsError("File is not exists now")

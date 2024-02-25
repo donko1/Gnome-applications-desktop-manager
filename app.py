@@ -1,13 +1,15 @@
 
+# -*- coding: utf-8 -*-
+
 import customtkinter as ctk
 import tkinter as tk
-import json
 import os
 from PIL import ImageTk, Image
 from manager import ApplicationManager
 import pyperclip
 from typing import Callable
 import ctypes
+from settings import Settings
 
 ctk.set_default_color_theme("dark-blue")
 
@@ -25,24 +27,6 @@ def chooseTextByLanguage(ruText: str, enText: str, lang: str) -> str:
         return ruText
     return enText
 
-class Settings:
-    def __init__(self):
-        if not os.path.isfile('settings.json'):
-            with open("settings.json", "w") as file:
-                json.dump({"Language":"English", "ExtendedSettings": False}, file, indent=4)
-
-        with open('settings.json', 'r') as file:
-            self.data = json.load(file)
-    
-    def write_data(self, key, value):
-        self.data[key] = value
-        with open('settings.json', 'w') as file:
-            json.dump(self.data, file, indent=4)
-
-    def get_data(self, key):
-        with open('settings.json', 'r') as file:
-            self.data = json.load(file)
-        return self.data.get(key)
 
 class Application(ctk.CTkFrame):
     def __init__(self, master, name: str, image_path: str, command: callable):
