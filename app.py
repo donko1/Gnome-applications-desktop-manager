@@ -7,6 +7,15 @@ from PIL import ImageTk, Image
 from manager import ApplicationManager
 import pyperclip
 from typing import Callable
+import ctypes
+
+ctk.set_default_color_theme("dark-blue")
+
+def is_admin():
+   try:
+     return os.getuid() == 0
+   except AttributeError:
+     return ctypes.windll.shell32.IsUserAnAdmin() != 0
 
 def restart_application():
     app.reboot_app()  
@@ -204,7 +213,7 @@ class EditApp(ctk.CTkFrame):
         self.terminalComand_frame = ctk.CTkFrame(self.parent_frame, width=400, corner_radius=0)
         self.terminalComand_frame_label = ctk.CTkLabel(self.terminalComand_frame, text=chooseTextByLanguage("Команда:", "Command:", self.settings.get_data("Language")))
         self.terminalComand_frame_label.grid(row=0, column=0, padx=(10, 0), pady=20)
-        self.terminalComand_frame_input = ctk.CTkEntry(self.terminalComand_frame, height=30, width=200, placeholder_text=self.application_data["Exec"])
+        self.terminalComand_frame_input = ctk.CTkEntry(self.terminalComand_frame, height=30, width=600, placeholder_text=self.application_data["Exec"])
         self.terminalComand_frame_input.grid(row=0, column=1, padx=(5, 10), pady=20)
         self.terminalComand_frame.grid(row=3, column=0, padx=(20, 10), sticky="nsew")
 
@@ -320,7 +329,7 @@ class AllGlobalApplications(ctk.CTkFrame):
         super().__init__(master)
         self.settings = Settings()
         
-        self.app_frame = ctk.CTkScrollableFrame(self, width=880, height=880)
+        self.app_frame = ctk.CTkScrollableFrame(self, width=1000, height=880)
         _, applications = manager.get_all_applications()
         matrix = [[0], [0]]
         for i, elem in enumerate(applications):
@@ -395,29 +404,29 @@ class App(ctk.CTk):
             self.settings = Settings()
 
             self.title("Gnome applications manager")
-            self.geometry("900x900") 
+            self.geometry("1100x990") 
 
         self.menubar = ctk.CTkFrame(self)
         self.menubar.pack(side="top", fill="x")
-        self.menubar.columnconfigure([0, 1, 2, 3, 4] if self.settings.get_data("ExtendedSettings") else [0, 1, 2, 3], weight=1)
+        self.menubar.columnconfigure([0, 1, 2, 3, 4] if self.settings.get_data("ExtendedSettings") and is_admin() else [0, 1, 2, 3], weight=1)
 
-        self.button_guide = ctk.CTkButton(self.menubar,fg_color="transparent", text=chooseTextByLanguage("Гайд", "Guide", self.settings.get_data("Language")), command=self.open_guide)
+        self.button_guide = ctk.CTkButton(self.menubar, text=chooseTextByLanguage("Гайд", "Guide", self.settings.get_data("Language")), command=self.open_guide)
         self.button_guide.grid(row=0, column=0, padx=10, pady=5)
 
-        self.button_local = ctk.CTkButton(self.menubar,fg_color="transparent", text=chooseTextByLanguage("Локальные\nприложения" if self.settings.get_data("ExtendedSettings") else "Приложения", "Local\napplications" if self.settings.get_data("ExtendedSettings") else "Applications", self.settings.get_data("Language")), command=self.open_local)
+        self.button_local = ctk.CTkButton(self.menubar, text=chooseTextByLanguage("Локальные\nприложения" if self.settings.get_data("ExtendedSettings") else "Приложения", "Local\napplications" if self.settings.get_data("ExtendedSettings") else "Applications", self.settings.get_data("Language")), command=self.open_local)
         self.button_local.grid(row=0, column=1, padx=10, pady=5)
 
-        self.button_global = ctk.CTkButton(self.menubar,fg_color="transparent", text=chooseTextByLanguage("Глобальные\nприложения", "Global\napplications", self.settings.get_data("Language")), command=self.open_global)
-        if self.settings.get_data("ExtendedSettings"):
+        self.button_global = ctk.CTkButton(self.menubar, text=chooseTextByLanguage("Глобальные\nприложения", "Global\napplications", self.settings.get_data("Language")), command=self.open_global)
+        if self.settings.get_data("ExtendedSettings") and is_admin():
             self.button_global.grid(row=0, column=2, padx=10, pady=5)
 
 
-        self.button_maker = ctk.CTkButton(self.menubar, fg_color="transparent", text=chooseTextByLanguage("Создать\nсвоё приложение", "Make your\nown application", self.settings.get_data("Language")), command=self.open_maker)
-        self.button_maker.grid(row=0, column=3 if self.settings.get_data("ExtendedSettings") else 2, padx=10, pady=5)
+        self.button_maker = ctk.CTkButton(self.menubar, text=chooseTextByLanguage("Создать\nсвоё приложение", "Make your\nown application", self.settings.get_data("Language")), command=self.open_maker)
+        self.button_maker.grid(row=0, column=3 if self.settings.get_data("ExtendedSettings") and is_admin() else 2, padx=10, pady=5)
 
 
-        self.button_settings = ctk.CTkButton(self.menubar, text=chooseTextByLanguage("Настройки", "Settings", self.settings.get_data("Language")), fg_color="transparent",command=self.open_settings)
-        self.button_settings.grid(row=0, column=4 if self.settings.get_data("ExtendedSettings") else 3, padx=10, pady=5)
+        self.button_settings = ctk.CTkButton(self.menubar, text=chooseTextByLanguage("Настройки", "Settings", self.settings.get_data("Language")), command=self.open_settings)
+        self.button_settings.grid(row=0, column=4 if self.settings.get_data("ExtendedSettings") and is_admin() else 3, padx=10, pady=5)
 
 
         self.frame = ctk.CTkFrame(self)
