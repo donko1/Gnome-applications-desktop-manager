@@ -15,8 +15,9 @@ class CannotReadApplicationsFolder(Exception):
 class ApplicationManager:
 	def __init__(self):
 		self.folder_path: str = os.path.expanduser('~/.local/share/applications')
-		self.folder_path_global: str = os.path.expanduser('/usr/share/applications')
-		
+		self.folder_path_global: str = '/usr/share/applications'
+		if not os.path.exists(self.folder_path):
+			self.folder_path = None
 		if not self.folder_path or not self.folder_path_global:
 			raise CannotReadApplicationsFolder
 		
@@ -61,6 +62,8 @@ Icon={2}
 	@classmethod
 	def __get_all_applications_from_folder(cls, folder: str) -> list:
 		out: list = []
+		if not folder:
+			return []
 		files: list = os.listdir(folder)
 		for file in files:
 			path_to_file: str = f"{folder}/{file}" 
