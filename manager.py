@@ -1,12 +1,11 @@
 
 # -*- coding: utf-8 -*-
- 
+
 import os
 import locale
 from collections import namedtuple
 from settings import Settings
 from pprint import pprint as print # This line is for debug
-
 class CannotMoveNotExistingFileError(Exception):
 	def __init__(self, *args, **kwargs):
 		super().__init__(self, *args, **kwargs)
@@ -103,8 +102,12 @@ Icon={2}
 			snapd: tuple = (self.__get_all_applications_from_folder("/var/lib/snapd/desktop/applications/", self.settings.get_data("Language")))
 			if snapd:
 				glob_applications.extend(snapd)
+		
+		if os.path.exists("/var/lib/flatpak/exports/share/applications"):
+			flatpak: tuple = (self.__get_all_applications_from_folder("/var/lib/flatpak/exports/share/applications", self.settings.get_data("Language")))
+			if flatpak:
+				glob_applications.extend(flatpak)
 
-		glob_applications = glob_applications
 		local_applications = sorted(local_applications, key=lambda x: locale.strxfrm(x['Name']))
 		glob_applications = sorted(glob_applications, key=lambda x: locale.strxfrm(x['Name']))
 
@@ -178,3 +181,4 @@ def main():
 
 if __name__ == '__main__':
 	main()
+

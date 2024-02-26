@@ -183,7 +183,8 @@ class EditApp(ctk.CTkFrame):
         self.name_frame = ctk.CTkFrame(self.parent_frame, width=400, corner_radius=0)
         self.name_frame_label = ctk.CTkLabel(self.name_frame, text=chooseTextByLanguage("Название:", "Name:", self.settings.get_data("Language")))
         self.name_frame_label.grid(row=0, column=0, padx=(10, 0), pady=20)
-        self.name_frame_input = ctk.CTkEntry(self.name_frame, height=30, placeholder_text=self.application_data["Name"])
+        v = ctk.StringVar(self.name_frame, value=self.application_data["Name"])
+        self.name_frame_input = ctk.CTkEntry(self.name_frame, height=30, textvariable=v, placeholder_text=self.application_data["Name"])
         self.name_frame_input.grid(row=0, column=1, padx=(5, 10), pady=20)
         self.name_frame.grid(row=1, column=0, padx=(20, 10), pady=(10, 0), sticky="nsew")
         
@@ -197,7 +198,8 @@ class EditApp(ctk.CTkFrame):
         self.terminalComand_frame = ctk.CTkFrame(self.parent_frame, width=400, corner_radius=0)
         self.terminalComand_frame_label = ctk.CTkLabel(self.terminalComand_frame, text=chooseTextByLanguage("Команда:", "Command:", self.settings.get_data("Language")))
         self.terminalComand_frame_label.grid(row=0, column=0, padx=(10, 0), pady=20)
-        self.terminalComand_frame_input = ctk.CTkEntry(self.terminalComand_frame, height=30, width=600, placeholder_text=self.application_data["Exec"])
+        v = ctk.StringVar(self.terminalComand_frame, value=self.application_data["Exec"])
+        self.terminalComand_frame_input = ctk.CTkEntry(self.terminalComand_frame, height=30, width=600, textvariable=v)
         self.terminalComand_frame_input.grid(row=0, column=1, padx=(5, 10), pady=20)
         self.terminalComand_frame.grid(row=3, column=0, padx=(20, 10), sticky="nsew")
 
