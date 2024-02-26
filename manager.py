@@ -97,15 +97,20 @@ Icon={2}
 
 
 	def get_all_applications(self):
-		local_applications: tuple = tuple(self.__get_all_applications_from_folder(self.folder_path, self.settings.get_data("Language")))
-		glob_applications: list = [self.__get_all_applications_from_folder(self.folder_path_global, self.settings.get_data("Language"))]
+		local_applications: list = list(self.__get_all_applications_from_folder(self.folder_path, self.settings.get_data("Language")))
+		glob_applications: list = [*self.__get_all_applications_from_folder(self.folder_path_global, self.settings.get_data("Language"))]
 		if os.path.exists("/var/lib/snapd/desktop/"):
-			snapd: tuple = (self.__get_all_applications_from_folder("/var/lib/snapd/desktop/", self.settings.get_data("Language")))
+			snapd: tuple = (self.__get_all_applications_from_folder("/var/lib/snapd/desktop/applications/", self.settings.get_data("Language")))
 			if snapd:
 				glob_applications.extend(snapd)
 
+		glob_applications = glob_applications
+		local_applications = sorted(local_applications, key=lambda x: locale.strxfrm(x['Name']))
+		glob_applications = sorted(glob_applications, key=lambda x: locale.strxfrm(x['Name']))
+
 		outC = namedtuple("Apps", "local_apps global_apps")
-		out = outC(local_applications, *glob_applications) 
+		out = outC(local_applications, glob_applications) 
+
 		return out
 
 

@@ -208,11 +208,11 @@ class EditApp(ctk.CTkFrame):
             self.terminal_frame_checkbox.select()
 
         if self.settings.get_data("ExtendedSettings"):
-            self.label = ctk.CTkLabel(self.frame_frame, text=chooseTextByLanguage("Создать приложение/.desktop файл", "Create application/.desktop file", self.settings.get_data("Language")))
+            self.label = ctk.CTkLabel(self.frame_frame, text=chooseTextByLanguage("Изменить приложение", "Edit application", self.settings.get_data("Language")))
             self.terminal_frame.grid(row=4, column=0, padx=(20, 10), sticky="nsew")
     
         else:
-            self.label = ctk.CTkLabel(self.frame_frame, text=chooseTextByLanguage("Создать приложение", "Create application", self.settings.get_data("Language")))            
+            self.label = ctk.CTkLabel(self.frame_frame, text=chooseTextByLanguage("Изменить приложение", "Edit application", self.settings.get_data("Language")))            
         if os.path.isfile(self.application_data["Icon"]):
             self.icon_path_button.grid(row=0, column=1, padx=(10, 10), pady=20)
             my_image = ctk.CTkImage(light_image=Image.open(self.application_data["Icon"]),
