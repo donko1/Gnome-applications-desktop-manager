@@ -377,8 +377,7 @@ class Guide(ctk.CTkFrame):
 5. Создание своего приложения
     - Первые графы повторяються
     - Графа "Переноса" позволяет автоматически перетащить созданный .desktop файл в
-глобальную или локальную папку. При отключении сохраняет путь до .desktop файла в буфере обмена
-Приятного использования!""", """
+глобальную или локальную папку. При отключении сохраняет путь до .desktop файла в буфере обмена""", """
 Here you will be able to easily create, modify, or delete applications!
 Just get started or read this guide
 1. Usage
@@ -403,11 +402,13 @@ Just get started or read this guide
 5. Creating your own application
     - First paragraphs are repeated
     - The "Move" paragraph allows you to automatically move the created .desktop file into
-global or local folder. When disabled, it saves the path to the .desktop file in the clipboard
-Enjoy using!""", self.settings.get_data("Language")), font=("TkDefaultFont", 15))
+global or local folder. When disabled, it saves the path to the .desktop file in the clipboard""", self.settings.get_data("Language")), font=("TkDefaultFont", 15), justify="left")
+
+        self.label_3 = ctk.CTkLabel(self.current_frame,font=("TkDefaultFont", 25), text=chooseTextByLanguage("Приятного использования!", "Enjoy using!", self.settings.get_data("Language")))
         
         self.label_1.grid(row=0, column=0, padx=50, pady=(100, 0))
-        self.label_2.grid(row=1, column=0, padx=50, pady=(0, 100))
+        self.label_2.grid(row=1, column=0, padx=50, pady=0)
+        self.label_3.grid(row=2, column=0, padx=50, pady=(10, 100))
 
         self.current_frame.pack()
 
