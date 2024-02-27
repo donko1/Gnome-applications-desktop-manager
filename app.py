@@ -349,8 +349,67 @@ class Guide(ctk.CTkFrame):
     def __init__(self, master):
         super().__init__(master)
         self.settings = Settings()
-        self.label = ctk.CTkLabel(self, text="Guide")
-        self.label.pack()
+
+        self.current_frame = ctk.CTkFrame(self) 
+        
+        self.label_1 = ctk.CTkLabel(self.current_frame, text=chooseTextByLanguage("Добро пожаловать в \nGnome applications desktop manager!", "Welcome to \nGnome applications desktop manager!", self.settings.get_data("Language")), font=("TkDefaultFont", 40))
+        self.label_2 = ctk.CTkLabel(self.current_frame, text=chooseTextByLanguage("""Здесь вы сможете легко создавать, изменять или удалять приложения!
+Просто начните использование или прочитайте этот гайд
+1.Использование
+   - Зайдите в настройки и измените язык(если нужно) и включить расширенные настройки
+   - Для полного использования всех возможностей запустите программу от лица администратора. Гайд есть в github
+   - Приложение уже добавлено в список ваших приложений!
+2.Локальные приложения
+   - Здесь вы можете видеть все приложения, которые сохранены в папке user-а
+   - Нажмите для изменения или удаления
+3. Глобальные приложения
+   - Здесь вы можете видеть приложения установленные в общую папку, установленные через snap и так далее
+   - Нажмите для изменения или удаления
+4. Изменение приложения
+   - Здесь от 3 до 4 граф:
+       - В графе "Название" вы вводите название программы
+       - В графе "Иконка" вы можете выбрать новую иконку
+       - В графе "Команда" вы вводите команду, котрая открывает программу
+       - В графе "Терминал" вы можете включить или отключить открытие терминала программы
+   - Для сохранения нажмите "Сохранить"
+   - Для удаления приложения нажмите "Удалить приложение
+Удаляет только .deskop файл. Вы все еще сможете запустить приложение через терминал" 
+5. Создание своего приложения
+    - Первые графы повторяються
+    - Графа "Переноса" позволяет автоматически перетащить созданный .desktop файл в
+глобальную или локальную папку. При отключении сохраняет путь до .desktop файла в буфере обмена
+Приятного использования!""", """
+Here you will be able to easily create, modify, or delete applications!
+Just get started or read this guide
+1. Usage
+   - Go to settings and change the language (if needed) and enable advanced settings
+   - For full use of all features, run the program as an administrator. The guide is available on GitHub
+   - The application is already added to your list of applications!
+2. Local applications
+   - Here you can see all applications saved in the user's folder
+   - Click to modify or delete
+3. Global applications
+   - Here you can see applications installed in the common folder, installed via snap, and so on
+   - Click to modify or delete
+4. Modifying an application
+   - Here from 3 to 4 paragraphs:
+       - In the "Name" field, you enter the program name
+       - In the "Icon" field, you can select a new icon
+       - In the "Command" field, you enter the command that opens the program
+       - In the "Terminal" field, you can enable or disable opening the program terminal
+   - Press "Save" to save
+   - To delete the application, press "Delete application.
+   Only deletes the .desktop file. You can still run the application via the terminal"
+5. Creating your own application
+    - First paragraphs are repeated
+    - The "Move" paragraph allows you to automatically move the created .desktop file into
+global or local folder. When disabled, it saves the path to the .desktop file in the clipboard
+Enjoy using!""", self.settings.get_data("Language")), font=("TkDefaultFont", 15))
+        
+        self.label_1.grid(row=0, column=0, padx=50, pady=(100, 0))
+        self.label_2.grid(row=1, column=0, padx=50, pady=(0, 100))
+
+        self.current_frame.pack()
 
 class SettingsFrame(ctk.CTkFrame):
     def __init__(self, master):
@@ -390,7 +449,7 @@ class App(ctk.CTk):
             self.settings = Settings()
 
             self.title("Gnome applications manager")
-            self.geometry("1100x990") 
+            self.geometry("1300x990") 
 
         self.menubar = ctk.CTkFrame(self)
         self.menubar.pack(side="top", fill="x")
