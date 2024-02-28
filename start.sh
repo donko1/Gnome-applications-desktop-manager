@@ -7,8 +7,8 @@ if [ ! -d "venv" ]; then
     python3 -m venv venv --without-pip
 	sudo apt-get install xclip
 	sudo apt-get install python3-tk
-	sudo apt install git
-
+	sudo apt-get install curl
+	
 	PYTHON_VERSION=$(python3 -V 2>&1 | grep -Po '(?<=Python )(.+)')
 	PYTHON_VENV="python${PYTHON_VERSION:0:4}-venv"
 	sudo apt install $PYTHON_VENV
