@@ -17,5 +17,6 @@ if [ ! -d "venv" ]; then
 	curl https://bootstrap.pypa.io/get-pip.py | python
 	pip3 install -r requirements.txt
 fi
+chmod +x /bin/gnome_applications_manager
 source venv/bin/activate
 python3 app.py

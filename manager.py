@@ -44,10 +44,8 @@ Icon={2}
 				Exec = True
 		if not "Gnome applications manager" in names and not "Менеджер приложений gnome" in names and not Exec:
 			self.create_desktop_file("Gnome applications manager" if not locale.getlocale()[0] == "ru_RU" else "Менеджер приложений gnome",  os.path.abspath("assets/icon.png"), f"bash {os.path.abspath('start.sh')}")
-			with open(os.path.expanduser("~/.bashrc"), "r") as f:
-				if not f"alias gnome_applications_manager=\"sudo bash {os.path.abspath('start.sh')}\"" in f.read():
-					with open(os.path.expanduser("~/.bashrc"), "a") as f2:
-						f2.write(f"\nalias gnome_applications_manager=\"sudo bash {os.path.abspath('start.sh')}\"")
+			with open("/bin/gnome_applications_manager", "w") as f:
+				f.write("sudo bash /home/donkol/Gnome-applications-desktop-manager/start.sh")
 
 	def __format_dict_to_desktop(self, d: dict) -> str:
 		return self.form.format(d["Name"], d["Exec"], d["Icon"], str(d["Terminal"]).lower())
