@@ -3,11 +3,31 @@ import os
 
 class Settings:
     def __init__(self):
+        default_settings = {
+            "Language": "English",
+            "ExtendedSettings": False,
+            "Theme": "dark"
+        }
+
         if not os.path.isfile('settings.json'):
             with open("settings.json", "w") as file:
-                json.dump({"Language":"English", "ExtendedSettings": False}, file, indent=4)
-            # Set permissions to allow read/write for all users
+                json.dump(default_settings, file, indent=4)
             os.chmod("settings.json", 0o666)
+        else:
+            # Update existing settings file with any missing keys
+            with open('settings.json', 'r') as file:
+                current_settings = json.load(file)
+        
+            settings_updated = False
+            for key, value in default_settings.items():
+                if key not in current_settings:
+                    current_settings[key] = value
+                    settings_updated = True
+        
+            if settings_updated:
+                with open('settings.json', 'w') as file:
+                    json.dump(current_settings, file, indent=4)
+                os.chmod("settings.json", 0o666)
 
         with open('settings.json', 'r') as file:
             self.data = json.load(file)

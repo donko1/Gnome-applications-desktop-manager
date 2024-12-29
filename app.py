@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 
 import customtkinter as ctk
@@ -10,8 +9,13 @@ import pyperclip
 from typing import Callable
 import ctypes
 from settings import Settings
+from icon_finder import IconFinder
+from loading_indicator import LoadingIndicator
+import threading
 
 ctk.set_default_color_theme("dark-blue")
+
+icon_finder = IconFinder()
 
 def is_admin():
    try:
@@ -31,23 +35,36 @@ def chooseTextByLanguage(ruText: str, enText: str, lang: str) -> str:
 class Application(ctk.CTkFrame):
     def __init__(self, master, name: str, image_path: str, command: callable):
         super().__init__(master)
-        try:
-            if os.path.isfile(image_path):
-                my_image = ctk.CTkImage(light_image=Image.open(image_path),
-                                      dark_image=Image.open(image_path),
-                                      size=(50, 50))
-
-            
-            else:        
-                my_image = ctk.CTkImage(light_image=Image.open("assets/default.png"),
-                                      dark_image=Image.open("assets/default.png"),
-                                      size=(200, 200))
-        except:
-            my_image = ctk.CTkImage(light_image=Image.open("assets/default.png"),
-                                      dark_image=Image.open("assets/default.png"),
-                                      size=(200, 200))
         
-        self.image_of_app = ctk.CTkButton(self, image=my_image, text="", fg_color="transparent",command=lambda: app.open_edit(command))
+        # Try to find the icon using IconFinder
+        icon_path = icon_finder.find_icon(image_path)
+        if icon_path and os.path.isfile(icon_path):
+            try:
+                my_image = ctk.CTkImage(
+                    light_image=Image.open(icon_path),
+                    dark_image=Image.open(icon_path),
+                    size=(48, 48)
+                )
+            except:
+                my_image = ctk.CTkImage(
+                    light_image=Image.open("assets/default.png"),
+                    dark_image=Image.open("assets/default.png"),
+                    size=(48, 48)
+                )
+        else:
+            my_image = ctk.CTkImage(
+                light_image=Image.open("assets/default.png"),
+                dark_image=Image.open("assets/default.png"),
+                size=(48, 48)
+            )
+        
+        self.image_of_app = ctk.CTkButton(
+            self,
+            image=my_image,
+            text="",
+            fg_color="transparent",
+            command=lambda: app.open_edit(command)
+        )
         self.image_of_app.grid(row=0, column=0, pady=(20, 3))
 
         self.label = ctk.CTkLabel(self, text=name)
@@ -281,136 +298,273 @@ class AllLocalApplications(ctk.CTkFrame):
         super().__init__(master)
         self.settings = Settings()
         
-        self.app_frame = ctk.CTkScrollableFrame(self, width=880, height=880)
+        # Create main frame that fills the window
+        self.main_frame = ctk.CTkFrame(self)
+        self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        # Show loading indicator
+        self.loading = LoadingIndicator(
+            self.main_frame,
+            text=chooseTextByLanguage("Загрузка приложений", "Loading applications", self.settings.get_data("Language"))
+        )
+        self.loading.pack(expand=True)
+        
+        # Load applications in a separate thread
+        self.load_thread = threading.Thread(target=self._load_applications)
+        self.load_thread.daemon = True
+        self.load_thread.start()
+    
+    def _load_applications(self):
+        # Create scrollable frame
+        self.app_frame = ctk.CTkScrollableFrame(
+            self.main_frame,
+            width=1200,
+            height=800,
+            label_text=chooseTextByLanguage("Локальные приложения", "Local Applications", self.settings.get_data("Language"))
+        )
+        
+        # Get applications
         applications, _ = manager.get_all_applications()
-        matrix = [[0], [0]]
+        
+        # Display applications in grid
         for i, elem in enumerate(applications):
             row, col = self.__get_addr(i)            
             try:
-                self.app = Application(self.app_frame, elem["Name"], elem["Icon"], elem)
+                app = Application(self.app_frame, elem["Name"], elem["Icon"], elem)
             except KeyError:
-                self.app = Application(self.app_frame, elem["Name"], "", elem)
-            self.app.grid(row=row, column=col)
+                app = Application(self.app_frame, elem["Name"], "", elem)
+            app.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
+            
+        # Configure grid columns to be equal width
+        for i in range(4):  # 4 columns
+            self.app_frame.grid_columnconfigure(i, weight=1)
+        
+        # Enable mouse wheel scrolling for Linux
+        self.app_frame.bind_all("<Button-4>", self._on_mousewheel)  # Linux scroll up
+        self.app_frame.bind_all("<Button-5>", self._on_mousewheel)  # Linux scroll down
+        
+        # Remove loading indicator and show applications
+        self.loading.stop()
+        self.app_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
-        self.app_frame.pack()
-
+    def _on_mousewheel(self, event):
+        if event.num == 4:  # scroll up
+            self.app_frame._parent_canvas.yview_scroll(-1, "units")
+        elif event.num == 5:  # scroll down
+            self.app_frame._parent_canvas.yview_scroll(1, "units")
         
     @staticmethod
     def __get_addr(n: int) -> tuple:
-        x = 0
-        y = 0
-
-        while n > 0:
-            if y < 3:
-                y += 1
-            else:
-                x += 1
-                y = 0
-            n -= 1
-
-        return (x, y)
+        return (n // 4, n % 4)  # 4 columns layout
 
 class AllGlobalApplications(ctk.CTkFrame):
     def __init__(self, master):
         super().__init__(master)
         self.settings = Settings()
         
-        self.app_frame = ctk.CTkScrollableFrame(self, width=1000, height=880)
+        # Create main frame that fills the window
+        self.main_frame = ctk.CTkFrame(self)
+        self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        # Show loading indicator
+        self.loading = LoadingIndicator(
+            self.main_frame,
+            text=chooseTextByLanguage("Загрузка приложений", "Loading applications", self.settings.get_data("Language"))
+        )
+        self.loading.pack(expand=True)
+        
+        # Load applications in a separate thread
+        self.load_thread = threading.Thread(target=self._load_applications)
+        self.load_thread.daemon = True
+        self.load_thread.start()
+    
+    def _load_applications(self):
+        # Create scrollable frame
+        self.app_frame = ctk.CTkScrollableFrame(
+            self.main_frame,
+            width=1200,
+            height=800,
+            label_text=chooseTextByLanguage("Глобальные приложения", "Global Applications", self.settings.get_data("Language"))
+        )
+        
+        # Get applications
         _, applications = manager.get_all_applications()
-        matrix = [[0], [0]]
+        
+        # Display applications in grid
         for i, elem in enumerate(applications):
             row, col = self.__get_addr(i)            
             try:
-                self.app = Application(self.app_frame, elem["Name"], elem["Icon"], elem)
+                app = Application(self.app_frame, elem["Name"], elem["Icon"], elem)
             except KeyError:
-                self.app = Application(self.app_frame, elem["Name"], "", elem)
-            self.app.grid(row=row, column=col)
+                app = Application(self.app_frame, elem["Name"], "", elem)
+            app.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
+            
+        # Configure grid columns to be equal width
+        for i in range(4):  # 4 columns
+            self.app_frame.grid_columnconfigure(i, weight=1)
+        
+        # Enable mouse wheel scrolling for Linux
+        self.app_frame.bind_all("<Button-4>", self._on_mousewheel)  # Linux scroll up
+        self.app_frame.bind_all("<Button-5>", self._on_mousewheel)  # Linux scroll down
+        
+        # Remove loading indicator and show applications
+        self.loading.stop()
+        self.app_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
-        self.app_frame.pack()
-
+    def _on_mousewheel(self, event):
+        if event.num == 4:  # scroll up
+            self.app_frame._parent_canvas.yview_scroll(-1, "units")
+        elif event.num == 5:  # scroll down
+            self.app_frame._parent_canvas.yview_scroll(1, "units")
         
     @staticmethod
     def __get_addr(n: int) -> tuple:
-        x = 0
-        y = 0
-
-        while n > 0:
-            if y < 3:
-                y += 1
-            else:
-                x += 1
-                y = 0
-            n -= 1
-
-        return (x, y)
-
+        return (n // 4, n % 4)  # 4 columns layout
 
 class Guide(ctk.CTkFrame):
     def __init__(self, master):
         super().__init__(master)
         self.settings = Settings()
 
-        self.current_frame = ctk.CTkFrame(self) 
-        
-        self.label_1 = ctk.CTkLabel(self.current_frame, text=chooseTextByLanguage("Добро пожаловать в \nGnome applications desktop manager!", "Welcome to \nGnome applications desktop manager!", self.settings.get_data("Language")), font=("TkDefaultFont", 40))
-        self.label_2 = ctk.CTkLabel(self.current_frame, text=chooseTextByLanguage("""Здесь вы сможете легко создавать, изменять или удалять приложения!
-Просто начните использование или прочитайте этот гайд
-1.Использование
-   - Зайдите в настройки и измените язык(если нужно) и включить расширенные настройки
-   - Для полного использования всех возможностей запустите программу от лица администратора. Гайд есть в github
-   - Приложение уже добавлено в список ваших приложений!
-2.Локальные приложения
-   - Здесь вы можете видеть все приложения, которые сохранены в папке user-а
-   - Нажмите для изменения или удаления
-3. Глобальные приложения
-   - Здесь вы можете видеть приложения установленные в общую папку, установленные через snap и так далее
-   - Нажмите для изменения или удаления
-4. Изменение приложения
-   - Здесь от 3 до 4 граф:
-       - В графе "Название" вы вводите название программы
-       - В графе "Иконка" вы можете выбрать новую иконку
-       - В графе "Команда" вы вводите команду, котрая открывает программу
-       - В графе "Терминал" вы можете включить или отключить открытие терминала программы
-   - Для сохранения нажмите "Сохранить"
-   - Для удаления приложения нажмите "Удалить приложение
-Удаляет только .deskop файл. Вы все еще сможете запустить приложение через терминал" 
-5. Создание своего приложения
-    - Первые графы повторяються
-    - Графа "Переноса" позволяет автоматически перетащить созданный .desktop файл в
-глобальную или локальную папку. При отключении сохраняет путь до .desktop файла в буфере обмена""", """
-Here you will be able to easily create, modify, or delete applications!
-Just get started or read this guide
-1. Usage
-   - Go to settings and change the language (if needed) and enable advanced settings
-   - For full use of all features, run the program as an administrator. The guide is available on GitHub
-   - The application is already added to your list of applications!
-2. Local applications
-   - Here you can see all applications saved in the user's folder
-   - Click to modify or delete
-3. Global applications
-   - Here you can see applications installed in the common folder, installed via snap, and so on
-   - Click to modify or delete
-4. Modifying an application
-   - Here from 3 to 4 paragraphs:
-       - In the "Name" field, you enter the program name
-       - In the "Icon" field, you can select a new icon
-       - In the "Command" field, you enter the command that opens the program
-       - In the "Terminal" field, you can enable or disable opening the program terminal
-   - Press "Save" to save
-   - To delete the application, press "Delete application.
-   Only deletes the .desktop file. You can still run the application via the terminal"
-5. Creating your own application
-    - First paragraphs are repeated
-    - The "Move" paragraph allows you to automatically move the created .desktop file into
-global or local folder. When disabled, it saves the path to the .desktop file in the clipboard""", self.settings.get_data("Language")), font=("TkDefaultFont", 15), justify="left")
+        # Основной фрейм с прокруткой
+        self.main_frame = ctk.CTkScrollableFrame(self)
+        self.main_frame.pack(fill="both", expand=True, padx=20, pady=20)
 
-        self.label_3 = ctk.CTkLabel(self.current_frame,font=("TkDefaultFont", 25), text=chooseTextByLanguage("Приятного использования!", "Enjoy using!", self.settings.get_data("Language")))
+        # Заголовок
+        title_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
+        title_frame.pack(fill="x", pady=(0, 30))
         
-        self.label_1.grid(row=0, column=0, padx=50, pady=(100, 0))
-        self.label_2.grid(row=1, column=0, padx=50, pady=0)
-        self.label_3.grid(row=2, column=0, padx=50, pady=(10, 100))
+        title = ctk.CTkLabel(
+            title_frame,
+            text=chooseTextByLanguage(
+                "Добро пожаловать в Gnome Applications Manager!",
+                "Welcome to Gnome Applications Manager!",
+                self.settings.get_data("Language")
+            ),
+            font=("TkDefaultFont", 24, "bold")
+        )
+        title.pack(pady=10)
+        
+        subtitle = ctk.CTkLabel(
+            title_frame,
+            text=chooseTextByLanguage(
+                "Простой способ управления вашими приложениями",
+                "An easy way to manage your applications",
+                self.settings.get_data("Language")
+            ),
+            font=("TkDefaultFont", 16)
+        )
+        subtitle.pack()
 
-        self.current_frame.pack()
+        # Карточки с разделами
+        sections = [
+            {
+                "title": chooseTextByLanguage("🚀 Начало работы", "🚀 Getting Started", self.settings.get_data("Language")),
+                "content": chooseTextByLanguage(
+                    "• Измените язык и тему в настройках\n"
+                    "• Для полного доступа запустите от администратора\n"
+                    "• Приложение уже добавлено в ваш список!",
+                    
+                    "• Change language and theme in settings\n"
+                    "• Run as administrator for full access\n"
+                    "• The app is already in your list!",
+                    self.settings.get_data("Language")
+                )
+            },
+            {
+                "title": chooseTextByLanguage("📱 Локальные приложения", "📱 Local Applications", self.settings.get_data("Language")),
+                "content": chooseTextByLanguage(
+                    "• Приложения в вашей домашней папке\n"
+                    "• Нажмите для изменения или удаления\n"
+                    "• Доступны без прав администратора",
+                    
+                    "• Apps in your home folder\n"
+                    "• Click to modify or delete\n"
+                    "• Available without admin rights",
+                    self.settings.get_data("Language")
+                )
+            },
+            {
+                "title": chooseTextByLanguage("🌐 Глобальные приложения", "🌐 Global Applications", self.settings.get_data("Language")),
+                "content": chooseTextByLanguage(
+                    "• Системные приложения и snap/flatpak\n"
+                    "• Нажмите для изменения или удаления\n"
+                    "• Требуются права администратора",
+                    
+                    "• System apps and snap/flatpak\n"
+                    "• Click to modify or delete\n"
+                    "• Requires administrator rights",
+                    self.settings.get_data("Language")
+                )
+            },
+            {
+                "title": chooseTextByLanguage("✏️ Редактирование", "✏️ Editing", self.settings.get_data("Language")),
+                "content": chooseTextByLanguage(
+                    "• Название: имя программы\n"
+                    "• Иконка: выберите новое изображение\n"
+                    "• Команда: как запускать программу\n"
+                    "• Терминал: открывать ли консоль\n"
+                    "• Сохранить или удалить приложение",
+                    
+                    "• Name: program title\n"
+                    "• Icon: choose new image\n"
+                    "• Command: how to launch\n"
+                    "• Terminal: open console or not\n"
+                    "• Save or delete the app",
+                    self.settings.get_data("Language")
+                )
+            },
+            {
+                "title": chooseTextByLanguage("➕ Создание приложения", "➕ Creating Application", self.settings.get_data("Language")),
+                "content": chooseTextByLanguage(
+                    "• Заполните те же поля\n"
+                    "• Выберите место установки\n"
+                    "• Или сохраните путь в буфер обмена",
+                    
+                    "• Fill in the same fields\n"
+                    "• Choose installation location\n"
+                    "• Or save path to clipboard",
+                    self.settings.get_data("Language")
+                )
+            }
+        ]
+
+        # Создаем карточки
+        for section in sections:
+            card = ctk.CTkFrame(self.main_frame)
+            card.pack(fill="x", pady=10, padx=5, ipady=10)
+            
+            # Заголовок карточки
+            title = ctk.CTkLabel(
+                card,
+                text=section["title"],
+                font=("TkDefaultFont", 18, "bold")
+            )
+            title.pack(pady=(10, 5), padx=15, anchor="w")
+            
+            # Содержимое карточки
+            content = ctk.CTkLabel(
+                card,
+                text=section["content"],
+                justify="left",
+                anchor="w"
+            )
+            content.pack(pady=(0, 10), padx=15, anchor="w")
+
+        # Финальное сообщение
+        final_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
+        final_frame.pack(fill="x", pady=(20, 0))
+        
+        final_message = ctk.CTkLabel(
+            final_frame,
+            text=chooseTextByLanguage(
+                "🎉 Приятного использования!",
+                "🎉 Enjoy using the app!",
+                self.settings.get_data("Language")
+            ),
+            font=("TkDefaultFont", 18, "bold")
+        )
+        final_message.pack(pady=10)
 
 class SettingsFrame(ctk.CTkFrame):
     def __init__(self, master):
@@ -428,16 +582,47 @@ class SettingsFrame(ctk.CTkFrame):
         self.option_menu.pack(side="left", padx=5)
         self.option_menu.set(self.settings.get_data("Language"))
 
+        self.theme_frame = ctk.CTkFrame(parent_frame)
+        self.theme_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nsw")
+        self.theme_label = ctk.CTkLabel(self.theme_frame, text=chooseTextByLanguage("Тема", "Theme", self.settings.get_data("Language")))
+        self.theme_label.pack(side="left", padx=30, pady=10)
+        theme_values = ["dark", "light"] if self.settings.get_data("Language") == "English" else ["черная", "белая"]
+        self.theme_menu = ctk.CTkOptionMenu(self.theme_frame, values=theme_values, command=self.changeTheme)
+        self.theme_menu.pack(side="left", padx=5)
+        current_theme = self.settings.get_data("Theme")
+        # Convert theme value for display
+        display_theme = current_theme
+        if self.settings.get_data("Language") == "Русский":
+            display_theme = "черная" if current_theme == "dark" else "белая"
+        self.theme_menu.set(display_theme)
+
         self.checkbox_frame = ctk.CTkFrame(parent_frame)
-        self.checkbox_frame.grid(row=1, column=0, padx=(20, 10), pady=10, sticky="nsw")
+        self.checkbox_frame.grid(row=2, column=0, padx=(20, 10), pady=10, sticky="nsw")
         self.checkbox_1 = ctk.CTkCheckBox(self.checkbox_frame, text=chooseTextByLanguage("Расширенные настройки(только для продвинутых пользователей)", "Extended settings(advanced users only)", self.settings.get_data("Language")), command=self.changeSettings)
         if self.settings.get_data("ExtendedSettings"):
             self.checkbox_1.select()
         self.checkbox_1.grid(row=0, column=0, padx=10, pady=10, sticky="w")
 
     def changeLanguage(self, arg):
+        # Update theme menu text when language changes
+        current_theme = self.settings.get_data("Theme")
         self.settings.write_data("Language", arg)
+        theme_values = ["dark", "light"] if arg == "English" else ["черная", "белая"]
+        self.theme_menu.configure(values=theme_values)
+        display_theme = current_theme
+        if arg == "Русский":
+            display_theme = "черная" if current_theme == "dark" else "белая"
+        self.theme_menu.set(display_theme)
         restart_application()
+
+    def changeTheme(self, new_theme):
+        # Convert Russian theme names to English for storage
+        if new_theme == "черная":
+            new_theme = "dark"
+        elif new_theme == "белая":
+            new_theme = "light"
+        self.settings.write_data("Theme", new_theme)
+        ctk.set_appearance_mode(new_theme)
 
     def changeSettings(self):
         self.settings.write_data("ExtendedSettings", bool(self.checkbox_1.get()))
@@ -448,6 +633,10 @@ class App(ctk.CTk):
         if create_window:
             super().__init__()
             self.settings = Settings()
+
+            # Set theme from settings with fallback to dark theme
+            theme = self.settings.get_data("Theme") or "dark"
+            ctk.set_appearance_mode(theme)
 
             self.title("Gnome applications manager")
             self.geometry("1300x990") 
