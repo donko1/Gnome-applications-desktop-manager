@@ -100,7 +100,6 @@ A convenient graphical manager for creating and managing `.desktop` files in Lin
 - Safe handling of system files
 - Proper permission management
 - Secure root privilege handling
-- Backup creation for critical operations
 
 ## 📝 License
 
