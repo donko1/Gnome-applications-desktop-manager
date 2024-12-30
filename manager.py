@@ -22,8 +22,6 @@ class ApplicationManager:
         self.folder_path: str = os.path.expanduser('~/.local/share/applications')
         self.folder_path_global: str = '/usr/share/applications'
         self.settings = Settings()
-        self._cache = {}
-        self._cache_lock = threading.Lock()
         
         # Предопределенные глобальные директории
         self.global_dirs = [
@@ -71,7 +69,7 @@ Icon={2}
             self.create_desktop_file(
                 name,
                 os.path.abspath("assets/icon.png"),
-                f"bash {os.path.abspath('start.sh')}"
+                f"bash {os.path.abspath('start.sh')}",
             )
             # with open("/bin/gnome_applications_manager", "w") as f: # Now this thing is making by bash.
             #     f.write("sudo bash /home/donkol/Gnome-applications-desktop-manager/start.sh")
@@ -101,11 +99,6 @@ Icon={2}
         if not folder or not os.path.exists(folder):
             return []
             
-        cache_key = f"{folder}_{self.settings.get_data('Language')}"
-        with self._cache_lock:
-            if cache_key in self._cache:
-                return self._cache[cache_key]
-        
         applications = []
         try:
             files = [f for f in os.listdir(folder) if f.endswith(".desktop")]
@@ -121,8 +114,6 @@ Icon={2}
                 except:
                     continue
                     
-            with self._cache_lock:
-                self._cache[cache_key] = applications
             return applications
         except:
             return []

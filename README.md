@@ -39,11 +39,18 @@ A convenient graphical manager for creating and managing `.desktop` files in Lin
    cd Gnome-applications-desktop-manager
    ```
 
-2. **Install and first launch:**
+2. **Init the manager:**
    ```bash
-   sudo bash start.sh
+   sudo bash init.sh
+   ```
+   The application will automatically install all requirements
+
+3. **Start the app:**
+   ```bash
+   gnome_applications_manager
    ```
    The application will automatically add itself to your applications list.
+
 
 ## 💻 Usage
 

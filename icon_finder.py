@@ -27,9 +27,8 @@ class IconFinder:
             if os.path.exists(expanded):
                 self.expanded_paths.append(expanded)
 
-    @lru_cache(maxsize=1000)
     def find_icon(self, icon_name: str) -> str:
-        """Поиск иконки с кэшированием результатов"""
+        """Поиск иконки без кэширования результатов"""
         if not icon_name:
             return ""
             
