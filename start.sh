@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Get the directory of the current script
-SCRIPT_DIR="$(dirname "$0")"
+SCRIPT_DIR="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
 # Create the gnome_applications_manager executable in /bin if it doesn't exist
 if [ ! -f /bin/gnome_applications_manager ]; then
