@@ -73,8 +73,8 @@ Icon={2}
                 os.path.abspath("assets/icon.png"),
                 f"bash {os.path.abspath('start.sh')}"
             )
-            with open("/bin/gnome_applications_manager", "w") as f:
-                f.write("sudo bash /home/donkol/Gnome-applications-desktop-manager/start.sh")
+            # with open("/bin/gnome_applications_manager", "w") as f: # Now this thing is making by bash.
+            #     f.write("sudo bash /home/donkol/Gnome-applications-desktop-manager/start.sh")
 
     @staticmethod
     def __format_desktop_to_dict(desktop_content: str, language: str) -> dict:

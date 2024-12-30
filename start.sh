@@ -26,6 +26,7 @@ if [ ! -d "venv" ]; then
     curl https://bootstrap.pypa.io/get-pip.py | python
 	pip3 install -r requirements.txt
 	python3 settings.py
+	python3 manager.py
 	chmod 666 settings.json 
 fi
 
