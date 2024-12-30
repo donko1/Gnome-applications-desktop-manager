@@ -25,6 +25,8 @@ if [ ! -d "venv" ]; then
     source venv/bin/activate
     curl https://bootstrap.pypa.io/get-pip.py | python
 	pip3 install -r requirements.txt
+	python3 settings.py
+	chmod 666 settings.json 
 fi
 
 source venv/bin/activate
