@@ -713,6 +713,9 @@ def main():
     global app, manager
     app = App()
     manager = ApplicationManager()
+    try:
+        os.remove("assets/example.png")
+    except: pass
     app.iconphoto(False, ImageTk.PhotoImage(file='assets/icon.png'))
     app.mainloop()
 
